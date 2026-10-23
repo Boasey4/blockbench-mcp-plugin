@@ -28,7 +28,7 @@ beforeEach(() => {
 
 useGlobals(() => ({
   Setting: TestSetting,
-  Settings: { stored },
+  Settings: { stored, get: (id: string) => TestSetting.all.get(id)?.master_value },
   tl: (key: string) => key,
 }));
 

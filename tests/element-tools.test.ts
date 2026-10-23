@@ -21,6 +21,11 @@ interface IOutlineEntry {
   parent: string;
 }
 
+/** A `list_outline` node as the tool returns it; only the nesting is read. */
+interface IListedNode {
+  children?: IListedNode[];
+}
+
 /** Undo snapshot: tracked element and group properties, plus the hierarchy when `outliner` is set. */
 interface ISave {
   elements: INodeData[];
@@ -421,7 +426,8 @@ describe("remove_element", () => {
       expect(limited.truncated_at_max_depth).toEqual(["rig"]);
       const depthTwo = await callJson("list_outline", { max_depth: 2 });
       expect(depthTwo.truncated_at_max_depth).toBeUndefined();
-      expect(depthTwo.roots[0].children[0].children[0].children).toEqual([]);
+      const [depthTwoRoot] = depthTwo.roots as IListedNode[];
+      expect(depthTwoRoot?.children?.[0]?.children?.[0]?.children).toEqual([]);
     });
   });
 });

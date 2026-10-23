@@ -12,6 +12,26 @@
 
 [![skills.sh](https://skills.sh/b/jasonjgardner/blockbench-mcp-project)](https://skills.sh/jasonjgardner/blockbench-mcp-project)
 
+## About this fork
+
+This is a fork of [jasonjgardner/blockbench-mcp-plugin](https://github.com/jasonjgardner/blockbench-mcp-plugin). It differs from upstream in:
+
+- **`risky_eval` is off by default.** It runs any JavaScript a client sends; turn it on in Settings > General only while you need it.
+- **Optional access token** (Settings > General > MCP Access Token). When set, clients must send `Authorization: Bearer <token>`.
+- **Tool Profile** (Full/Lean/Minimal) and **Hidden Tools** settings. Lean hides particles, armatures, mesh editing and material instances; Minimal keeps 26 core tools for small or local models. `bun run tools:size` measures what a client receives: Full about 45k tokens, Lean about 28k (-38%), Minimal about 8.7k (-81%).
+- **Default port 3300** instead of 3000, which many dev servers use. If the port is taken anyway, Blockbench now says so in a message box instead of a 3-second toast.
+
+The "Load Plugin from URL" link below installs upstream's build. To use this fork, build it and load the file:
+
+```bash
+git clone https://github.com/Boasey4/blockbench-mcp-plugin.git
+cd blockbench-mcp-plugin
+bun install
+bun run build   # writes dist/mcp.js
+```
+
+Then in Blockbench go to File > Plugins > **Load Plugin from File** and pick `dist/mcp.js`.
+
 ## Plugin Installation
 
 Open the desktop version of Blockbench, go to File > Plugins and click the "Load Plugin from URL" and paste in this URL:
@@ -36,7 +56,7 @@ See [headless/README.md](headless/README.md) for client configuration, the tool 
 
 Configure the MCP server under Blockbench settings: **Settings** > **General** > **MCP Server Port** and **MCP Server Endpoint**.
 
-> The following installation settings examples use the default values of `:3000/bb-mcp`
+> The following installation settings examples use the default values of `:3300/bb-mcp`
 
 ## Installation
 
@@ -51,7 +71,7 @@ For headless examples, replace `/path/to/models` with an absolute path to your m
 
 ```bash
 # Desktop plugin (HTTP)
-npx mcp-add --type http --url "http://localhost:3000/bb-mcp" --scope project
+npx mcp-add --type http --url "http://localhost:3300/bb-mcp" --scope project
 
 # Headless (stdio)
 npx mcp-add --name bbmodel --type stdio --command "npx -y github:jasonjgardner/blockbench-mcp-plugin --root /path/to/models" --scope project
@@ -67,7 +87,7 @@ npx mcp-add --name bbmodel --type stdio --command "npx -y github:jasonjgardner/b
 {
   "servers": {
     "blockbench": {
-      "url": "http://localhost:3000/bb-mcp",
+      "url": "http://localhost:3300/bb-mcp",
       "type": "http"
     },
     "bbmodel": {
@@ -103,7 +123,7 @@ npx mcp-add --name bbmodel --type stdio --command "npx -y github:jasonjgardner/b
   "mcpServers": {
     "blockbench": {
       "command": "npx",
-      "args": ["-y", "mcp-remote", "http://localhost:3000/bb-mcp"]
+      "args": ["-y", "mcp-remote", "http://localhost:3300/bb-mcp"]
     },
     "bbmodel": {
       "command": "npx",
@@ -119,7 +139,7 @@ npx mcp-add --name bbmodel --type stdio --command "npx -y github:jasonjgardner/b
   "mcpServers": {
     "blockbench": {
       "command": "cmd",
-      "args": ["/c", "npx", "-y", "mcp-remote", "http://localhost:3000/bb-mcp"]
+      "args": ["/c", "npx", "-y", "mcp-remote", "http://localhost:3300/bb-mcp"]
     },
     "bbmodel": {
       "command": "cmd",
@@ -135,7 +155,7 @@ npx mcp-add --name bbmodel --type stdio --command "npx -y github:jasonjgardner/b
 
 ```bash
 # Desktop plugin (HTTP)
-claude mcp add blockbench --transport http http://localhost:3000/bb-mcp
+claude mcp add blockbench --transport http http://localhost:3300/bb-mcp
 
 # Headless (stdio)
 claude mcp add bbmodel --transport stdio -- npx -y github:jasonjgardner/blockbench-mcp-plugin --root /path/to/models
@@ -154,7 +174,7 @@ Or register the servers directly:
 
 ```bash
 # Desktop plugin (HTTP)
-codex mcp add blockbench --url http://localhost:3000/bb-mcp
+codex mcp add blockbench --url http://localhost:3300/bb-mcp
 
 # Headless (stdio)
 codex mcp add bbmodel -- npx -y github:jasonjgardner/blockbench-mcp-plugin --root /path/to/models
@@ -168,7 +188,7 @@ codex mcp add bbmodel -- npx -y github:jasonjgardner/blockbench-mcp-plugin --roo
 {
   "mcpServers": {
     "blockbench": {
-      "serverUrl": "http://localhost:3000/bb-mcp"
+      "serverUrl": "http://localhost:3300/bb-mcp"
     },
     "bbmodel": {
       "command": "npx",
@@ -190,7 +210,7 @@ codex mcp add bbmodel -- npx -y github:jasonjgardner/blockbench-mcp-plugin --roo
 {
   "mcpServers": {
     "blockbench": {
-      "url": "http://localhost:3000/bb-mcp",
+      "url": "http://localhost:3300/bb-mcp",
       "type": "streamableHttp",
       "disabled": false,
       "autoApprove": []
@@ -212,7 +232,7 @@ codex mcp add bbmodel -- npx -y github:jasonjgardner/blockbench-mcp-plugin --roo
 
 ```bash
 # Desktop plugin (HTTP)
-uvx ollmcp -u http://localhost:3000/bb-mcp
+uvx ollmcp -u http://localhost:3300/bb-mcp
 
 # Headless (stdio): register, then start the client
 uvx ollmcp mcp add bbmodel -- npx -y github:jasonjgardner/blockbench-mcp-plugin --root /path/to/models
@@ -237,7 +257,7 @@ Choose a remote server for the desktop HTTP URL, or a local server for the headl
   "mcp": {
     "blockbench": {
       "type": "remote",
-      "url": "http://localhost:3000/bb-mcp",
+      "url": "http://localhost:3300/bb-mcp",
       "enabled": true
     },
     "bbmodel": {
@@ -277,7 +297,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed instructions on setting up t
 
 ## Security
 
-The desktop plugin's HTTP server listens on this computer only (`127.0.0.1` and `::1`) by default, so `http://localhost:3000/bb-mcp` works whether a client resolves `localhost` to IPv4 or IPv6. Requests with a non-loopback `Origin` or `Host` header get `403 Forbidden`, which keeps web pages, including DNS rebinding attacks, from driving Blockbench through your browser.
+The desktop plugin's HTTP server listens on this computer only (`127.0.0.1` and `::1`) by default, so `http://localhost:3300/bb-mcp` works whether a client resolves `localhost` to IPv4 or IPv6. Requests with a non-loopback `Origin` or `Host` header get `403 Forbidden`, which keeps web pages, including DNS rebinding attacks, from driving Blockbench through your browser.
 
 To accept connections from other computers (for example a client inside WSL2 without mirrored networking, a VM, or another machine), set **Settings** > **General** > **MCP Server Host** to `0.0.0.0` or `::` and reload the plugin. In that mode the `Host` header is no longer checked, since other computers reach the server by its address, but requests with a non-loopback `Origin` header are still refused. The server has no authentication: anyone who can reach the port can call every tool, including `risky_eval`. Only do this on a trusted network and keep your firewall rules restrictive.
 

@@ -10,7 +10,7 @@ import {
 } from '@/lib/factories'
 import { createServer as createMcpServer } from '@/server/server'
 import { sessionManager, type ISessionConfig } from '@/lib/sessions'
-import { checkRequest, formatHostForUrl, resolveListenPlan } from '@/server/net-security'
+import { checkAccessToken, checkRequest, formatHostForUrl, resolveListenPlan } from '@/server/net-security'
 
 export type { NetServer }
 
@@ -79,6 +79,7 @@ function getStatusText (status: number): string {
     202: 'Accepted',
     204: 'No Content',
     400: 'Bad Request',
+    401: 'Unauthorized',
     403: 'Forbidden',
     404: 'Not Found',
     405: 'Method Not Allowed',
@@ -219,7 +220,8 @@ export default function createNetServer (
     host,
     keepAlive = DEFAULT_KEEP_ALIVE,
     sessionConfig,
-    instructions
+    instructions,
+    accessToken
   }: {
     endpoint: string
     port: number
@@ -229,6 +231,8 @@ export default function createNetServer (
     sessionConfig?: Partial<ISessionConfig>
     /** Reads the `mcp_instructions` setting when a session starts, so edits apply to new sessions. */
     instructions?: () => string | undefined
+    /** Reads the `mcp_access_token` setting on every request; empty means no token is required. */
+    accessToken?: () => string | undefined
   }
 ): [NetServer[], SessionTransports] {
   const sessionTransports: SessionTransports = new Map()
@@ -479,6 +483,23 @@ export default function createNetServer (
             JSON.stringify({
               jsonrpc: '2.0',
               error: { code: -32000, message: `Forbidden: ${check.reason}` },
+              id: null
+            }),
+            answered
+          )
+          continue
+        }
+
+        const auth = checkAccessToken(headers, accessToken?.())
+        if (!auth.allowed) {
+          console.warn(`[MCP] Rejected request: ${auth.reason}`)
+          sendResponse(
+            socket,
+            401,
+            { 'content-type': 'application/json', 'www-authenticate': 'Bearer' },
+            JSON.stringify({
+              jsonrpc: '2.0',
+              error: { code: -32001, message: `Unauthorized: ${auth.reason}` },
               id: null
             }),
             answered
@@ -897,6 +918,9 @@ export default function createNetServer (
     }
   }
 
+  /** Set once the port-in-use dialog has shown, so a second listener does not repeat it. */
+  let portConflictReported = false
+
   // One listener per address. Without a host, Node would listen on every
   // interface and let other computers on the network drive Blockbench.
   const httpServers = listenPlan.hosts.map((listenHost) => {
@@ -926,6 +950,19 @@ export default function createNetServer (
         console.warn('[MCP] IPv6 loopback (::1) unavailable; listening on 127.0.0.1 only')
         return
       }
+      // Another program (often a dev server on a common port) owns the port. Clients that
+      // resolve `localhost` to the address it holds would silently talk to that program.
+      if (err.code === 'EADDRINUSE') {
+        if (portConflictReported) return
+        portConflictReported = true
+        const message =
+          `Port ${port} is already used by another program, so MCP clients cannot reach Blockbench ` +
+          `(they may reach that program instead). Change "MCP Server Port" in Settings > General, ` +
+          `then restart Blockbench.`
+        console.error(`[MCP] ${message}`)
+        Blockbench.showMessageBox({ title: 'MCP server could not start', message, icon: 'error' })
+        return
+      }
       console.error('[MCP] Server error:', err)
       Blockbench.showQuickMessage(`MCP Server error: ${err.message}`, 3000)
     })
@@ -944,7 +981,9 @@ export default function createNetServer (
   if (!listenPlan.loopbackOnly) {
     console.warn(
       `[MCP] mcp_host is "${host}": other computers can connect. ` +
-        `Anyone who can reach port ${port} can control Blockbench.`
+        (accessToken?.()?.trim()
+          ? `They need the access token set in Settings > General.`
+          : `Anyone who can reach port ${port} can control Blockbench; set an access token in Settings > General.`)
     )
   }
 

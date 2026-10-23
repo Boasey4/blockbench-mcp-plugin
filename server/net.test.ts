@@ -7,8 +7,14 @@ import { DEFAULT_MAX_SESSIONS, sessionManager, type ISessionConfig } from "@/lib
 import createNetServer, { type NetServer, type SessionTransports } from "@/server/net";
 import { useGlobals } from "@/tests/helpers/globals";
 
+/** Message boxes the server opened during the current test. */
+let messageBoxes: { title?: string; message?: string }[] = [];
+
 useGlobals(() => ({
-  Blockbench: { showQuickMessage: () => {} },
+  Blockbench: {
+    showQuickMessage: () => {},
+    showMessageBox: (options: { title?: string; message?: string }) => { messageBoxes.push(options); },
+  },
 }));
 
 const noKeepAlive = { enabled: false, idleTimeoutMs: 0, sseHeartbeatIntervalMs: 0 };
@@ -16,6 +22,7 @@ let running: NetServer[] = [];
 let sessions: SessionTransports = new Map();
 
 afterEach(() => {
+  messageBoxes = [];
   for (const server of running) server.close();
   running = [];
   // Sessions live in the process-wide manager; removing them closes their transports.
@@ -27,6 +34,7 @@ afterEach(() => {
 interface IStartOptions {
   sessionConfig?: Partial<ISessionConfig>;
   instructions?: () => string | undefined;
+  accessToken?: () => string | undefined;
 }
 
 /** Starts the plugin's HTTP server on free ports and waits until every listener is bound. */
@@ -196,6 +204,25 @@ describe("createNetServer listen addresses", () => {
   test("listens on an explicit host", async () => {
     const [server] = await start("127.0.0.1");
     expect((server.address() as AddressInfo).address).toBe("127.0.0.1");
+  });
+});
+
+describe("createNetServer port conflicts", () => {
+  test("explains a port another program holds in one message box", async () => {
+    const blocker = net.createServer();
+    await new Promise<void>((resolve) => blocker.listen(0, "127.0.0.1", () => resolve()));
+    const port = (blocker.address() as AddressInfo).port;
+    try {
+      const [servers, transports] = createNetServer(net, { port, endpoint: "/bb-mcp", host: "127.0.0.1", keepAlive: noKeepAlive });
+      running = servers;
+      sessions = transports;
+      await new Promise<void>((resolve) => servers[0]?.once("error", () => setTimeout(resolve, 0)));
+      expect(messageBoxes).toHaveLength(1);
+      expect(messageBoxes[0]?.title).toBe("MCP server could not start");
+      expect(messageBoxes[0]?.message).toContain(`Port ${port} is already used by another program`);
+    } finally {
+      blocker.close();
+    }
   });
 });
 
@@ -537,6 +564,35 @@ describe("createNetServer HTTP framing", () => {
     await connection.closed;
     expect(statuses()).toEqual(["HTTP/1.1 100 Continue", "HTTP/1.1 200 OK", "HTTP/1.1 100 Continue", "HTTP/1.1 200 OK"]);
     expect(splitResponses(connection.received()).map((response) => response.body)).toEqual(['{"ready":true}', '{"ready":true}']);
+  });
+});
+
+describe("createNetServer access token", () => {
+  test("refuses requests without the token with 401 before creating a session", async () => {
+    const [server] = await start("127.0.0.1", { accessToken: () => "s3cret" });
+    const port = portOf(server);
+    const before = sessions.size;
+    const res = await request(port, mcpPost(port), initializeBody);
+    expect(res.status).toBe(401);
+    expect(res.headers["www-authenticate"]).toBe("Bearer");
+    expect(res.body).toContain("Unauthorized");
+    expect(sessions.size).toBe(before);
+
+    const wrong = await request(port, [...mcpPost(port), "Authorization: Bearer nope"], initializeBody);
+    expect(wrong.status).toBe(401);
+  });
+
+  test("serves requests that carry the token, and reads the setting live", async () => {
+    let token = "s3cret";
+    const [server] = await start("127.0.0.1", { accessToken: () => token });
+    const port = portOf(server);
+    const res = await request(port, [...mcpPost(port), "Authorization: Bearer s3cret"], initializeBody);
+    expect(res.status).toBe(200);
+    expect(JSON.parse(res.body).result.serverInfo).toBeDefined();
+
+    token = "";
+    const open = await request(port, ["GET /bb-mcp/ready HTTP/1.1", `Host: localhost:${port}`]);
+    expect(open.status).toBe(200);
   });
 });
 

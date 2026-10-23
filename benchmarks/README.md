@@ -85,7 +85,7 @@ tools and records capabilities. It requires project-file resources and offscreen
 view tools from the current plugin. Save your own work before using this instance.
 
 Set `REPLICATE_API_TOKEN` in your shell environment. Do not put it in suite.json or
-commit it. `BLOCKBENCH_MCP_URL` defaults to `http://localhost:3000/bb-mcp`.
+commit it. `BLOCKBENCH_MCP_URL` defaults to `http://localhost:3300/bb-mcp`.
 
 Start with a selected cell:
 

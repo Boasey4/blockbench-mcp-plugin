@@ -44,7 +44,7 @@ Options:
   --blockbench <path>       Blockbench desktop executable (or .app) for blockbench_launch (default:
                             $BLOCKBENCH_PATH, blockbench on PATH, then the standard install folders)
   --blockbench-mcp-url <u>  Desktop plugin MCP endpoint polled by blockbench_launch (default:
-                            http://localhost:3000/bb-mcp)
+                            http://localhost:3300/bb-mcp)
   --web-app-url <url>       Blockbench web app for web_app links (default: https://web.blockbench.net/)
   --web-url-inline-max <n>  Longest web-app URL returned inline, in characters (default: 8000)
   --web-url-max <n>         Longest URL a web-app launcher page is written for (default: 2000000)

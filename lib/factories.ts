@@ -321,6 +321,18 @@ function installSchemaPublishingHandler(server: McpServer): void {
   }));
 }
 
+/** Tools the user hid through the tool profile or hidden-tools settings (see `lib/tool-filter.ts`). */
+let isHiddenByUser: (name: string) => boolean = () => false;
+
+/**
+ * Replaces the user visibility filter and republishes availability, so connected
+ * clients get `tools/list_changed` without reconnecting.
+ */
+export function setUserToolFilter(filter: (name: string) => boolean): void {
+  isHiddenByUser = filter;
+  refreshToolAvailability();
+}
+
 /**
  * Resolve the configured preference and native Blockbench condition against the
  * current editor state. A failing condition is unavailable during transient
@@ -329,6 +341,7 @@ function installSchemaPublishingHandler(server: McpServer): void {
 export function isToolAvailable(name: string): boolean {
   const definition = toolDefinitions[name];
   if (!definition?.configuredEnabled) return false;
+  if (isHiddenByUser(name)) return false;
   if (definition.condition === undefined) return true;
   try {
     return Condition(definition.condition);

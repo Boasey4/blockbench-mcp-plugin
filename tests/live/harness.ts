@@ -12,7 +12,7 @@ import { parseJsonRecord, records } from "./narrow";
  */
 export const ENDPOINT_ENV_VAR = "BLOCKBENCH_MCP_ENDPOINT";
 
-/** The plugin's default server URL (`http://localhost:3000/bb-mcp`), derived from the shared server defaults. */
+/** The plugin's default server URL (`http://localhost:3300/bb-mcp`), derived from the shared server defaults. */
 export const DEFAULT_ENDPOINT = `http://localhost:${DEFAULT_MCP_PORT}${DEFAULT_MCP_ENDPOINT}`;
 
 /**

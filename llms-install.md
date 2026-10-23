@@ -11,8 +11,8 @@ Before configuring the MCP connection, please confirm:
    - The MCP plugin must be installed (File > Plugins > Load from URL: `https://jasonjgardner.github.io/blockbench-mcp-plugin/mcp.js`)
 
 2. **What are your server settings?**
-   - Default: `http://localhost:3000/bb-mcp`
-   - If the port number and endpoint are something other than the default values (`:3000/bb-mcp`), please specify
+   - Default: `http://localhost:3300/bb-mcp`
+   - If the port number and endpoint are something other than the default values (`:3300/bb-mcp`), please specify
    - Settings can be changed in Blockbench: Settings > General > MCP Server Port / MCP Server Endpoint
 
 ## Configuration
@@ -81,4 +81,4 @@ claude mcp add blockbench --transport http http://localhost:{PORT}/{ENDPOINT}
 }
 ```
 
-Replace `{PORT}` with the port number (default: `3000`) and `{ENDPOINT}` with the endpoint path (default: `bb-mcp`).
+Replace `{PORT}` with the port number (default: `3300`) and `{ENDPOINT}` with the endpoint path (default: `bb-mcp`).

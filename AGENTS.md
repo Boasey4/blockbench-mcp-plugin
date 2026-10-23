@@ -97,7 +97,7 @@ Prompt and resource specs are defined **inline in the manifest** (not imported f
 - PRs: Include scope/summary, linked issues, screenshots/GIFs for UI changes, and steps to reproduce/test. Note any new tools, resources, settings, or breaking changes.
 
 ## Security & Configuration Tips
-- Server config lives in Blockbench Settings: MCP port and endpoint (defaults `:3000/bb-mcp`).
+- Server config lives in Blockbench Settings: MCP port and endpoint (defaults `:3300/bb-mcp`).
 - Do not commit secrets. Keep network calls behind tools; validate all inputs (use `zod`).
 - Keep bundle lean: add only necessary deps; prefer tree-shakeable utilities.
 

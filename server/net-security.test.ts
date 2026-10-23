@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import {
+  checkAccessToken,
   checkRequest,
   formatHostForUrl,
   hostnameFromHostHeader,
@@ -86,6 +87,26 @@ describe("checkRequest", () => {
   });
 });
 
+describe("checkAccessToken", () => {
+  test("allows every request when no token is set", () => {
+    expect(checkAccessToken({}, "")).toEqual({ allowed: true });
+    expect(checkAccessToken({}, undefined)).toEqual({ allowed: true });
+    expect(checkAccessToken({}, "   ")).toEqual({ allowed: true });
+  });
+
+  test("accepts the matching bearer token, case-insensitive scheme", () => {
+    expect(checkAccessToken({ authorization: "Bearer s3cret" }, "s3cret")).toEqual({ allowed: true });
+    expect(checkAccessToken({ authorization: "bearer  s3cret " }, " s3cret")).toEqual({ allowed: true });
+  });
+
+  test("rejects a missing, wrong or non-bearer credential", () => {
+    expect(checkAccessToken({}, "s3cret").allowed).toBe(false);
+    expect(checkAccessToken({ authorization: "Bearer wrong" }, "s3cret").allowed).toBe(false);
+    expect(checkAccessToken({ authorization: "Bearer s3cre" }, "s3cret").allowed).toBe(false);
+    expect(checkAccessToken({ authorization: "Basic s3cret" }, "s3cret").allowed).toBe(false);
+  });
+});
+
 test("formatHostForUrl brackets IPv6 literals", () => {
   expect(formatHostForUrl("127.0.0.1")).toBe("127.0.0.1");
   expect(formatHostForUrl("::1")).toBe("[::1]");
@@ -99,13 +120,13 @@ describe("resolveServerAddress", () => {
   });
 
   test("uses the defaults silently when a setting is unset", () => {
-    expect(resolveServerAddress(undefined, "")).toEqual({ port: 3000, endpoint: "/bb-mcp", warnings: [] });
+    expect(resolveServerAddress(undefined, "")).toEqual({ port: 3300, endpoint: "/bb-mcp", warnings: [] });
   });
 
   test("replaces an unusable port with the default and says so", () => {
     for (const port of [0, -1, 3000.5, 65536, "http", Number.NaN]) {
       const address = resolveServerAddress(port, "/bb-mcp");
-      expect(address.port).toBe(3000);
+      expect(address.port).toBe(3300);
       expect(address.warnings).toHaveLength(1);
     }
   });

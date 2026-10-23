@@ -99,7 +99,7 @@ async function loadSuite(values: Options): Promise<Suite> {
 }
 
 function mcpEndpoint(): string {
-  const endpoint = Bun.env.BLOCKBENCH_MCP_URL ?? "http://localhost:3000/bb-mcp";
+  const endpoint = Bun.env.BLOCKBENCH_MCP_URL ?? "http://localhost:3300/bb-mcp";
   const url = new URL(endpoint);
   if (
     url.username ||
