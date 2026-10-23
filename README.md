@@ -12,6 +12,26 @@
 
 [![skills.sh](https://skills.sh/b/jasonjgardner/blockbench-mcp-project)](https://skills.sh/jasonjgardner/blockbench-mcp-project)
 
+## About this fork
+
+This is a fork of [jasonjgardner/blockbench-mcp-plugin](https://github.com/jasonjgardner/blockbench-mcp-plugin). It differs from upstream in:
+
+- **`risky_eval` is off by default.** It runs any JavaScript a client sends; turn it on in Settings > General only while you need it.
+- **Optional access token** (Settings > General > MCP Access Token). When set, clients must send `Authorization: Bearer <token>`.
+- **Tool Profile** (Full/Lean) and **Hidden Tools** settings. Lean hides particles, armatures, mesh editing and material instances. `bun run tools:size` measures the cost: Lean cuts the `tools/list` a client receives by about 38% (from about 45k to about 28k tokens).
+- **Default port 3300** instead of 3000, which many dev servers use. If the port is taken anyway, Blockbench now says so in a message box instead of a 3-second toast.
+
+The "Load Plugin from URL" link below installs upstream's build. To use this fork, build it and load the file:
+
+```bash
+git clone https://github.com/Boasey4/blockbench-mcp-plugin.git
+cd blockbench-mcp-plugin
+bun install
+bun run build   # writes dist/mcp.js
+```
+
+Then in Blockbench go to File > Plugins > **Load Plugin from File** and pick `dist/mcp.js`.
+
 ## Plugin Installation
 
 Open the desktop version of Blockbench, go to File > Plugins and click the "Load Plugin from URL" and paste in this URL:
