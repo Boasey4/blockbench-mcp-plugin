@@ -8,6 +8,8 @@
 export const TOOL_PROFILE_FULL = "full";
 /** `mcp_tool_profile` value that hides the groups listed in {@link LEAN_HIDDEN_PATTERNS}. */
 export const TOOL_PROFILE_LEAN = "lean";
+/** `mcp_tool_profile` value that publishes only {@link MINIMAL_TOOLS}. */
+export const TOOL_PROFILE_MINIMAL = "minimal";
 
 /**
  * Groups the lean profile hides: particles, armatures and vertex weights, mesh editing, material
@@ -30,6 +32,23 @@ export const LEAN_HIDDEN_PATTERNS: readonly string[] = [
   "get_average_fps",
 ];
 
+/**
+ * The only tools the minimal profile publishes: enough to create a project, build and arrange
+ * cubes, texture and paint them, keyframe a simple animation, check the result and export.
+ * Meant for small or local models that lose track of long tool lists.
+ */
+export const MINIMAL_TOOLS: readonly string[] = [
+  "create_project", "get_project_info", "get_capabilities",
+  "place_cube", "modify_cube", "remove_element", "add_group", "duplicate_element", "rename_element",
+  "list_outline", "get_selection",
+  "create_texture", "apply_texture", "list_textures", "paint_fill_tool", "paint_with_brush",
+  "list_modes", "set_mode",
+  "create_animation", "manage_keyframes",
+  "capture_screenshot",
+  "undo", "redo", "save_checkpoint",
+  "list_export_formats", "export_model",
+];
+
 /** Splits the `mcp_hidden_tools` setting on commas, whitespace and semicolons. */
 export function parseToolPatterns(value: unknown): string[] {
   if (typeof value !== "string") return [];
@@ -44,12 +63,13 @@ function patternToRegExp(pattern: string): RegExp {
 
 /**
  * Builds the predicate `isToolAvailable` consults: true when the profile or the hidden patterns
- * exclude the tool. Unknown profiles behave as full, so a bad stored value never hides tools.
+ * exclude the tool. The minimal profile also hides tools other plugins contribute. Unknown profiles behave as full, so a bad stored value never hides tools.
  */
 export function compileToolFilter(profile: unknown, hiddenPatterns: unknown): (name: string) => boolean {
   const patterns = [
     ...(profile === TOOL_PROFILE_LEAN ? LEAN_HIDDEN_PATTERNS : []),
     ...parseToolPatterns(hiddenPatterns),
   ].map(patternToRegExp);
-  return name => patterns.some(pattern => pattern.test(name));
+  const minimal = profile === TOOL_PROFILE_MINIMAL ? new Set(MINIMAL_TOOLS) : null;
+  return name => (minimal !== null && !minimal.has(name)) || patterns.some(pattern => pattern.test(name));
 }

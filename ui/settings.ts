@@ -1,6 +1,6 @@
 import { DEFAULT_MCP_PORT, SETTING_DISCLOSE_AI_USAGE, SETTING_RISKY_EVAL_ENABLED, SETTING_SCRATCHPAD_ENABLED } from "@/lib/constants";
 import { refreshToolAvailability, setUserToolFilter } from "@/lib/factories";
-import { compileToolFilter, TOOL_PROFILE_FULL, TOOL_PROFILE_LEAN } from "@/lib/tool-filter";
+import { compileToolFilter, TOOL_PROFILE_FULL, TOOL_PROFILE_LEAN, TOOL_PROFILE_MINIMAL } from "@/lib/tool-filter";
 import { onScratchpadSettingChanged } from "@/lib/scratchpad-mode";
 
 const settings: Setting[] = [];
@@ -121,6 +121,7 @@ export function settingsSetup() {
       options: {
         [TOOL_PROFILE_FULL]: tl("mcp.settings.tool_profile_full"),
         [TOOL_PROFILE_LEAN]: tl("mcp.settings.tool_profile_lean"),
+        [TOOL_PROFILE_MINIMAL]: tl("mcp.settings.tool_profile_minimal"),
       },
       category,
       icon: "filter_list",

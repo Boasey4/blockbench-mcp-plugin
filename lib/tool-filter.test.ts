@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { compileToolFilter, parseToolPatterns, TOOL_PROFILE_FULL, TOOL_PROFILE_LEAN } from "@/lib/tool-filter";
+import { compileToolFilter, MINIMAL_TOOLS, parseToolPatterns, TOOL_PROFILE_FULL, TOOL_PROFILE_LEAN, TOOL_PROFILE_MINIMAL } from "@/lib/tool-filter";
 import docs from "@/docs/api.json";
 
 const allTools = (docs as { tools: { name: string; category: string }[] }).tools;
@@ -58,5 +58,19 @@ describe("compileToolFilter", () => {
       "create_animation", "manage_keyframes", "export_model", "undo", "capture_screenshot", "get_project_info"]) {
       expect([name, hidden(name)]).toEqual([name, false]);
     }
+  });
+
+  test("minimal publishes exactly its list, and every listed tool exists", () => {
+    const hidden = compileToolFilter(TOOL_PROFILE_MINIMAL, "");
+    const names = new Set(allTools.map(tool => tool.name));
+    expect(MINIMAL_TOOLS.filter(name => !names.has(name))).toEqual([]);
+    expect(allTools.filter(tool => !hidden(tool.name)).map(tool => tool.name).sort()).toEqual([...MINIMAL_TOOLS].sort());
+    expect(hidden("another_plugin_tool")).toBe(true);
+  });
+
+  test("hidden patterns still apply on top of minimal", () => {
+    const hidden = compileToolFilter(TOOL_PROFILE_MINIMAL, "paint_*");
+    expect(hidden("paint_with_brush")).toBe(true);
+    expect(hidden("place_cube")).toBe(false);
   });
 });

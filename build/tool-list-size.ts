@@ -11,7 +11,7 @@ import { z } from "zod";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { createTool, setUserToolFilter } from "@/lib/factories";
-import { compileToolFilter, TOOL_PROFILE_FULL, TOOL_PROFILE_LEAN } from "@/lib/tool-filter";
+import { compileToolFilter, TOOL_PROFILE_FULL, TOOL_PROFILE_LEAN, TOOL_PROFILE_MINIMAL } from "@/lib/tool-filter";
 import { getServer } from "@/server/server";
 import { toolManifest } from "./docs-manifest";
 
@@ -63,6 +63,7 @@ const rows = [
   await measure("Full, every integration installed", TOOL_PROFILE_FULL, false),
   await measure("Full, no GeckoLib/Hytale plugin", TOOL_PROFILE_FULL, true),
   await measure("Lean, no GeckoLib/Hytale plugin", TOOL_PROFILE_LEAN, true),
+  await measure("Minimal", TOOL_PROFILE_MINIMAL, true),
 ];
 
 const baseline = rows[1].characters;
@@ -78,6 +79,7 @@ for (const row of rows) {
   );
 }
 
+await measure("", TOOL_PROFILE_LEAN, true);
 const sizes = (await client.listTools()).tools
   .map((tool: IListedTool) => ({ name: tool.name, characters: JSON.stringify(tool).length }))
   .sort((a, b) => b.characters - a.characters)

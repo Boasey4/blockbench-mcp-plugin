@@ -18,7 +18,7 @@ This is a fork of [jasonjgardner/blockbench-mcp-plugin](https://github.com/jason
 
 - **`risky_eval` is off by default.** It runs any JavaScript a client sends; turn it on in Settings > General only while you need it.
 - **Optional access token** (Settings > General > MCP Access Token). When set, clients must send `Authorization: Bearer <token>`.
-- **Tool Profile** (Full/Lean) and **Hidden Tools** settings. Lean hides particles, armatures, mesh editing and material instances. `bun run tools:size` measures the cost: Lean cuts the `tools/list` a client receives by about 38% (from about 45k to about 28k tokens).
+- **Tool Profile** (Full/Lean/Minimal) and **Hidden Tools** settings. Lean hides particles, armatures, mesh editing and material instances; Minimal keeps 26 core tools for small or local models. `bun run tools:size` measures what a client receives: Full about 45k tokens, Lean about 28k (-38%), Minimal about 8.7k (-81%).
 - **Default port 3300** instead of 3000, which many dev servers use. If the port is taken anyway, Blockbench now says so in a message box instead of a 3-second toast.
 
 The "Load Plugin from URL" link below installs upstream's build. To use this fork, build it and load the file:
