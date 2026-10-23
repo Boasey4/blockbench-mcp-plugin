@@ -918,6 +918,9 @@ export default function createNetServer (
     }
   }
 
+  /** Set once the port-in-use dialog has shown, so a second listener does not repeat it. */
+  let portConflictReported = false
+
   // One listener per address. Without a host, Node would listen on every
   // interface and let other computers on the network drive Blockbench.
   const httpServers = listenPlan.hosts.map((listenHost) => {
@@ -945,6 +948,19 @@ export default function createNetServer (
         (err.code === 'EADDRNOTAVAIL' || err.code === 'EAFNOSUPPORT')
       if (ipv6LoopbackUnavailable) {
         console.warn('[MCP] IPv6 loopback (::1) unavailable; listening on 127.0.0.1 only')
+        return
+      }
+      // Another program (often a dev server on a common port) owns the port. Clients that
+      // resolve `localhost` to the address it holds would silently talk to that program.
+      if (err.code === 'EADDRINUSE') {
+        if (portConflictReported) return
+        portConflictReported = true
+        const message =
+          `Port ${port} is already used by another program, so MCP clients cannot reach Blockbench ` +
+          `(they may reach that program instead). Change "MCP Server Port" in Settings > General, ` +
+          `then restart Blockbench.`
+        console.error(`[MCP] ${message}`)
+        Blockbench.showMessageBox({ title: 'MCP server could not start', message, icon: 'error' })
         return
       }
       console.error('[MCP] Server error:', err)

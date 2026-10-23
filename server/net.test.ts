@@ -7,8 +7,14 @@ import { DEFAULT_MAX_SESSIONS, sessionManager, type ISessionConfig } from "@/lib
 import createNetServer, { type NetServer, type SessionTransports } from "@/server/net";
 import { useGlobals } from "@/tests/helpers/globals";
 
+/** Message boxes the server opened during the current test. */
+let messageBoxes: { title?: string; message?: string }[] = [];
+
 useGlobals(() => ({
-  Blockbench: { showQuickMessage: () => {} },
+  Blockbench: {
+    showQuickMessage: () => {},
+    showMessageBox: (options: { title?: string; message?: string }) => { messageBoxes.push(options); },
+  },
 }));
 
 const noKeepAlive = { enabled: false, idleTimeoutMs: 0, sseHeartbeatIntervalMs: 0 };
@@ -16,6 +22,7 @@ let running: NetServer[] = [];
 let sessions: SessionTransports = new Map();
 
 afterEach(() => {
+  messageBoxes = [];
   for (const server of running) server.close();
   running = [];
   // Sessions live in the process-wide manager; removing them closes their transports.
@@ -197,6 +204,25 @@ describe("createNetServer listen addresses", () => {
   test("listens on an explicit host", async () => {
     const [server] = await start("127.0.0.1");
     expect((server.address() as AddressInfo).address).toBe("127.0.0.1");
+  });
+});
+
+describe("createNetServer port conflicts", () => {
+  test("explains a port another program holds in one message box", async () => {
+    const blocker = net.createServer();
+    await new Promise<void>((resolve) => blocker.listen(0, "127.0.0.1", () => resolve()));
+    const port = (blocker.address() as AddressInfo).port;
+    try {
+      const [servers, transports] = createNetServer(net, { port, endpoint: "/bb-mcp", host: "127.0.0.1", keepAlive: noKeepAlive });
+      running = servers;
+      sessions = transports;
+      await new Promise<void>((resolve) => servers[0]?.once("error", () => setTimeout(resolve, 0)));
+      expect(messageBoxes).toHaveLength(1);
+      expect(messageBoxes[0]?.title).toBe("MCP server could not start");
+      expect(messageBoxes[0]?.message).toContain(`Port ${port} is already used by another program`);
+    } finally {
+      blocker.close();
+    }
   });
 });
 
