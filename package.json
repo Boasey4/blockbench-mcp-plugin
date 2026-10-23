@@ -36,7 +36,8 @@
     "docs:build": "bun run ./build/docs.ts",
     "docs:serve": "bun run docs/index.html",
     "docs": "bun run prompts:build && bun run docs:build && bun run docs:serve",
-    "inspect": "bunx @modelcontextprotocol/inspector"
+    "inspect": "bunx @modelcontextprotocol/inspector",
+    "tools:size": "bun run ./build/tool-list-size.ts"
   },
   "dependencies": {
     "zod": "^3.25.76",
