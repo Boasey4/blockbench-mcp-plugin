@@ -10,7 +10,7 @@ import {
 } from '@/lib/factories'
 import { createServer as createMcpServer } from '@/server/server'
 import { sessionManager, type ISessionConfig } from '@/lib/sessions'
-import { checkRequest, formatHostForUrl, resolveListenPlan } from '@/server/net-security'
+import { checkAccessToken, checkRequest, formatHostForUrl, resolveListenPlan } from '@/server/net-security'
 
 export type { NetServer }
 
@@ -79,6 +79,7 @@ function getStatusText (status: number): string {
     202: 'Accepted',
     204: 'No Content',
     400: 'Bad Request',
+    401: 'Unauthorized',
     403: 'Forbidden',
     404: 'Not Found',
     405: 'Method Not Allowed',
@@ -219,7 +220,8 @@ export default function createNetServer (
     host,
     keepAlive = DEFAULT_KEEP_ALIVE,
     sessionConfig,
-    instructions
+    instructions,
+    accessToken
   }: {
     endpoint: string
     port: number
@@ -229,6 +231,8 @@ export default function createNetServer (
     sessionConfig?: Partial<ISessionConfig>
     /** Reads the `mcp_instructions` setting when a session starts, so edits apply to new sessions. */
     instructions?: () => string | undefined
+    /** Reads the `mcp_access_token` setting on every request; empty means no token is required. */
+    accessToken?: () => string | undefined
   }
 ): [NetServer[], SessionTransports] {
   const sessionTransports: SessionTransports = new Map()
@@ -479,6 +483,23 @@ export default function createNetServer (
             JSON.stringify({
               jsonrpc: '2.0',
               error: { code: -32000, message: `Forbidden: ${check.reason}` },
+              id: null
+            }),
+            answered
+          )
+          continue
+        }
+
+        const auth = checkAccessToken(headers, accessToken?.())
+        if (!auth.allowed) {
+          console.warn(`[MCP] Rejected request: ${auth.reason}`)
+          sendResponse(
+            socket,
+            401,
+            { 'content-type': 'application/json', 'www-authenticate': 'Bearer' },
+            JSON.stringify({
+              jsonrpc: '2.0',
+              error: { code: -32001, message: `Unauthorized: ${auth.reason}` },
               id: null
             }),
             answered
@@ -944,7 +965,9 @@ export default function createNetServer (
   if (!listenPlan.loopbackOnly) {
     console.warn(
       `[MCP] mcp_host is "${host}": other computers can connect. ` +
-        `Anyone who can reach port ${port} can control Blockbench.`
+        (accessToken?.()?.trim()
+          ? `They need the access token set in Settings > General.`
+          : `Anyone who can reach port ${port} can control Blockbench; set an access token in Settings > General.`)
     )
   }
 

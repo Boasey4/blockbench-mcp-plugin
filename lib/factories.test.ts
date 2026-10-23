@@ -12,6 +12,7 @@ import {
   registerPromptsOnServer,
   registerToolsOnServer,
   refreshToolAvailability,
+  setUserToolFilter,
   tools,
 } from "@/lib/factories";
 import { createServer, getServer, setServer } from "@/server/server";
@@ -54,6 +55,7 @@ afterEach(async () => {
   Object.keys(prompts).forEach(name => delete prompts[name]);
   Object.keys(getAllPromptDefinitions()).forEach(name => delete getAllPromptDefinitions()[name]);
   setServer(originalServer);
+  setUserToolFilter(() => false);
   if (originalCondition) {
     Object.defineProperty(globalThis, "Condition", originalCondition);
     return;
@@ -257,6 +259,26 @@ describe.each<RegistrationMode>(["initial", "session"])("%s registration", (mode
     expect(secondNotification).toHaveBeenCalledTimes(2);
     const result = await first.callTool({ name: "conditional_one", arguments: {} });
     expect(result.isError).toBe(true);
+  });
+
+  test("the user tool filter hides tools, notifies sessions and refuses calls", async () => {
+    ["kept_tool", "hidden_tool"].forEach(name => createTool(name, {
+      description: "Always available.", parameters: z.object({}),
+      execute: async () => "done",
+    }));
+    const client = await connectClient(mode);
+    const notification = mock(() => {});
+    client.setNotificationHandler(ToolListChangedNotificationSchema, notification);
+    expect((await client.listTools()).tools).toHaveLength(2);
+
+    setUserToolFilter(name => name === "hidden_tool");
+    expect((await client.listTools()).tools.map(tool => tool.name)).toEqual(["kept_tool"]);
+    expect(notification).toHaveBeenCalledTimes(1);
+    expect(tools.hidden_tool?.enabled).toBe(false);
+    expect((await client.callTool({ name: "hidden_tool", arguments: {} })).isError).toBe(true);
+
+    setUserToolFilter(() => false);
+    expect((await client.listTools()).tools).toHaveLength(2);
   });
 
   test("rechecks conditions before execution even when a client has a stale enabled list", async () => {

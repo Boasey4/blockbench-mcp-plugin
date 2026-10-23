@@ -111,6 +111,7 @@ BBPlugin.register("mcp", {
         inactivityTimeoutMs: Math.max(1, sessionTimeoutMin) * 60 * 1000,
       },
       instructions: () => effectiveInstructions(Settings.get("mcp_instructions")),
+      accessToken: () => String(Settings.get("mcp_access_token") ?? ""),
     });
 
     // Built-in tools registered when @/server/tools was imported, so other

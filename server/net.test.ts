@@ -27,6 +27,7 @@ afterEach(() => {
 interface IStartOptions {
   sessionConfig?: Partial<ISessionConfig>;
   instructions?: () => string | undefined;
+  accessToken?: () => string | undefined;
 }
 
 /** Starts the plugin's HTTP server on free ports and waits until every listener is bound. */
@@ -537,6 +538,35 @@ describe("createNetServer HTTP framing", () => {
     await connection.closed;
     expect(statuses()).toEqual(["HTTP/1.1 100 Continue", "HTTP/1.1 200 OK", "HTTP/1.1 100 Continue", "HTTP/1.1 200 OK"]);
     expect(splitResponses(connection.received()).map((response) => response.body)).toEqual(['{"ready":true}', '{"ready":true}']);
+  });
+});
+
+describe("createNetServer access token", () => {
+  test("refuses requests without the token with 401 before creating a session", async () => {
+    const [server] = await start("127.0.0.1", { accessToken: () => "s3cret" });
+    const port = portOf(server);
+    const before = sessions.size;
+    const res = await request(port, mcpPost(port), initializeBody);
+    expect(res.status).toBe(401);
+    expect(res.headers["www-authenticate"]).toBe("Bearer");
+    expect(res.body).toContain("Unauthorized");
+    expect(sessions.size).toBe(before);
+
+    const wrong = await request(port, [...mcpPost(port), "Authorization: Bearer nope"], initializeBody);
+    expect(wrong.status).toBe(401);
+  });
+
+  test("serves requests that carry the token, and reads the setting live", async () => {
+    let token = "s3cret";
+    const [server] = await start("127.0.0.1", { accessToken: () => token });
+    const port = portOf(server);
+    const res = await request(port, [...mcpPost(port), "Authorization: Bearer s3cret"], initializeBody);
+    expect(res.status).toBe(200);
+    expect(JSON.parse(res.body).result.serverInfo).toBeDefined();
+
+    token = "";
+    const open = await request(port, ["GET /bb-mcp/ready HTTP/1.1", `Host: localhost:${port}`]);
+    expect(open.status).toBe(200);
   });
 });
 

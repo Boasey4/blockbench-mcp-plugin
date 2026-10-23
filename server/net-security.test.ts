@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import {
+  checkAccessToken,
   checkRequest,
   formatHostForUrl,
   hostnameFromHostHeader,
@@ -83,6 +84,26 @@ describe("checkRequest", () => {
   test("when exposed on purpose, skips the Host check but still rejects foreign origins", () => {
     expect(checkRequest({ host: "192.168.1.20:3000" }, exposedPlan)).toEqual({ allowed: true });
     expect(checkRequest({ host: "192.168.1.20:3000", origin: "http://evil.example" }, exposedPlan).allowed).toBe(false);
+  });
+});
+
+describe("checkAccessToken", () => {
+  test("allows every request when no token is set", () => {
+    expect(checkAccessToken({}, "")).toEqual({ allowed: true });
+    expect(checkAccessToken({}, undefined)).toEqual({ allowed: true });
+    expect(checkAccessToken({}, "   ")).toEqual({ allowed: true });
+  });
+
+  test("accepts the matching bearer token, case-insensitive scheme", () => {
+    expect(checkAccessToken({ authorization: "Bearer s3cret" }, "s3cret")).toEqual({ allowed: true });
+    expect(checkAccessToken({ authorization: "bearer  s3cret " }, " s3cret")).toEqual({ allowed: true });
+  });
+
+  test("rejects a missing, wrong or non-bearer credential", () => {
+    expect(checkAccessToken({}, "s3cret").allowed).toBe(false);
+    expect(checkAccessToken({ authorization: "Bearer wrong" }, "s3cret").allowed).toBe(false);
+    expect(checkAccessToken({ authorization: "Bearer s3cre" }, "s3cret").allowed).toBe(false);
+    expect(checkAccessToken({ authorization: "Basic s3cret" }, "s3cret").allowed).toBe(false);
   });
 });
 

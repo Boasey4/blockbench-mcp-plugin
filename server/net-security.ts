@@ -156,6 +156,29 @@ export function checkRequest(headers: Record<string, string>, plan: IListenPlan)
   return { allowed: true };
 }
 
+/** Compares two strings in time that depends only on their lengths, not on where they differ. */
+function timingSafeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
+}
+
+/**
+ * Checks `Authorization: Bearer <token>` against the `mcp_access_token` setting. An empty setting
+ * turns the check off. With a token set, any local program (or, on a non-loopback host, any
+ * computer) that reaches the port still needs the token, which the server otherwise never asks for.
+ */
+export function checkAccessToken(headers: Record<string, string>, token: string | undefined): RequestCheck {
+  const expected = token?.trim() ?? "";
+  if (expected === "") return { allowed: true };
+  const match = /^Bearer\s+(.+)$/i.exec(headers["authorization"]?.trim() ?? "");
+  if (!match || !timingSafeEqual(match[1].trim(), expected)) {
+    return { allowed: false, reason: "Missing or invalid access token" };
+  }
+  return { allowed: true };
+}
+
 /** `127.0.0.1` → `127.0.0.1`, `::1` → `[::1]`, for URLs in log messages. */
 export function formatHostForUrl(host: string): string {
   return host.includes(":") ? `[${host}]` : host;
