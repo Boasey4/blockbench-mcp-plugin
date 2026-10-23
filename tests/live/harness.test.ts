@@ -21,8 +21,8 @@ function offlineSession(): LiveSession {
 describe("endpoint resolution", () => {
   test("defaults to the plugin's shared port and path", () => {
     delete Bun.env[ENDPOINT_ENV_VAR];
-    expect(DEFAULT_ENDPOINT).toBe("http://localhost:3000/bb-mcp");
-    expect(resolveEndpoint(undefined).href).toBe("http://localhost:3000/bb-mcp");
+    expect(DEFAULT_ENDPOINT).toBe("http://localhost:3300/bb-mcp");
+    expect(resolveEndpoint(undefined).href).toBe("http://localhost:3300/bb-mcp");
   });
 
   test("prefers an explicit argument over the environment override", () => {

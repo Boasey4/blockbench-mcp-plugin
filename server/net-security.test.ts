@@ -120,13 +120,13 @@ describe("resolveServerAddress", () => {
   });
 
   test("uses the defaults silently when a setting is unset", () => {
-    expect(resolveServerAddress(undefined, "")).toEqual({ port: 3000, endpoint: "/bb-mcp", warnings: [] });
+    expect(resolveServerAddress(undefined, "")).toEqual({ port: 3300, endpoint: "/bb-mcp", warnings: [] });
   });
 
   test("replaces an unusable port with the default and says so", () => {
     for (const port of [0, -1, 3000.5, 65536, "http", Number.NaN]) {
       const address = resolveServerAddress(port, "/bb-mcp");
-      expect(address.port).toBe(3000);
+      expect(address.port).toBe(3300);
       expect(address.warnings).toHaveLength(1);
     }
   });

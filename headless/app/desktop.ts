@@ -20,7 +20,7 @@ import { existsSync } from "node:fs";
 import { join } from "node:path";
 
 /** URL of the desktop plugin's MCP endpoint (Settings > General in Blockbench). */
-export const DEFAULT_DESKTOP_MCP_URL = "http://localhost:3000/bb-mcp";
+export const DEFAULT_DESKTOP_MCP_URL = "http://localhost:3300/bb-mcp";
 /** How long a launch watches for the app exiting with an error. */
 const EARLY_EXIT_MS = 1500;
 

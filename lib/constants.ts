@@ -18,7 +18,7 @@ export const STATUS_STABLE = "stable";
 export const STATUS_EXPERIMENTAL = "experimental";
 
 /** Default HTTP port of the plugin's MCP server (Settings > General > MCP port). */
-export const DEFAULT_MCP_PORT = 3000;
+export const DEFAULT_MCP_PORT = 3300;
 /** Default MCP endpoint path served by the plugin (Settings > General > MCP endpoint). */
 export const DEFAULT_MCP_ENDPOINT = "/bb-mcp";
 

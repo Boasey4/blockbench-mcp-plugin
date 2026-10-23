@@ -1,4 +1,4 @@
-import { SETTING_DISCLOSE_AI_USAGE, SETTING_RISKY_EVAL_ENABLED, SETTING_SCRATCHPAD_ENABLED } from "@/lib/constants";
+import { DEFAULT_MCP_PORT, SETTING_DISCLOSE_AI_USAGE, SETTING_RISKY_EVAL_ENABLED, SETTING_SCRATCHPAD_ENABLED } from "@/lib/constants";
 import { refreshToolAvailability, setUserToolFilter } from "@/lib/factories";
 import { compileToolFilter, TOOL_PROFILE_FULL, TOOL_PROFILE_LEAN } from "@/lib/tool-filter";
 import { onScratchpadSettingChanged } from "@/lib/scratchpad-mode";
@@ -27,7 +27,7 @@ export function settingsSetup() {
       name: tl("mcp.settings.port_name"),
       description: tl("mcp.settings.port_desc"),
       type: "number",
-      value: 3000,
+      value: DEFAULT_MCP_PORT,
       min: 1,
       max: 65535,
       category,
